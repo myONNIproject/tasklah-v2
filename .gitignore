@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Secrets & Terraform
+.env
+.env.*
+terraform.tfvars
+*.tfvars
+*.tfstate
+*.tfstate.*
