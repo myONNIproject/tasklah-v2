@@ -1,0 +1,421 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+      # ============================================
+  }
+}
+}
+provider "aws" {
+  region = "ap-southeast-1"
+}
+variable "tidb_connection_string" {
+  type        = string
+  sensitive   = true
+}
+
+# ==========================================
+# 1. DATABASE
+# ==========================================
+resource "aws_dynamodb_table" "tasks_table" {
+  name           = "TaskLah_Tasks"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+
+  tags = {
+    Project = "TaskLah"
+  }
+}
+
+# ==========================================
+# 2. SECURITY (Roles & Policies)
+# ==========================================
+resource "aws_iam_role" "lambda_exec_role" {
+  name = "tasklah_lambda_exec_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "dynamodb_lambda_policy" {
+  name = "dynamodb_lambda_policy"
+  role = aws_iam_role.lambda_exec_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:Scan"
+        ]
+        Resource = aws_dynamodb_table.tasks_table.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "bedrock:InvokeModel"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+# ==========================================
+# 3. COMPUTE: PostTask Lambda
+# ==========================================
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../backend/dist/postTask"
+  output_path = "${path.module}/postTask.zip"
+}
+
+resource "aws_lambda_function" "post_task_lambda" {
+  filename         = data.archive_file.lambda_zip.output_path
+  function_name    = "TaskLah_PostTask"
+  role            = aws_iam_role.lambda_exec_role.arn
+  handler         = "index.handler"
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  runtime         = "nodejs20.x"
+
+  environment {
+  variables = {
+    TIDB_CONNECTION_STRING = var.tidb_connection_string
+  }
+}
+
+}
+
+# ==========================================
+# 4. COMPUTE: Chatbot Lambda
+# ==========================================
+data "archive_file" "chatbot_zip" {
+  type        = "zip"
+  source_file = "${path.module}/../backend/dist/chatbot/index.js"
+  output_path = "${path.module}/chatbot.zip"
+}
+
+resource "aws_lambda_function" "chatbot_lambda" {
+  filename         = data.archive_file.chatbot_zip.output_path
+  function_name    = "TaskLah_Chatbot"
+  role            = aws_iam_role.lambda_exec_role.arn
+  handler         = "index.handler"
+  source_code_hash = data.archive_file.chatbot_zip.output_base64sha256
+  runtime         = "nodejs20.x"
+  timeout         = 30
+}
+
+# ==========================================
+# 5. FRONT DOOR: API Gateway
+# ==========================================
+resource "aws_apigatewayv2_api" "tasklah_api" {
+  name          = "TaskLah_API"
+  protocol_type = "HTTP"
+
+  cors_configuration {
+    allow_origins = ["*"]
+    allow_methods = ["POST", "GET", "OPTIONS"]
+    allow_headers = ["content-type"]
+    max_age       = 300
+  }
+}
+
+# --- PostTask Route ---
+resource "aws_apigatewayv2_integration" "lambda_integration" {
+  api_id           = aws_apigatewayv2_api.tasklah_api.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = aws_lambda_function.post_task_lambda.invoke_arn
+  integration_method = "POST"
+}
+
+resource "aws_apigatewayv2_route" "post_task_route" {
+  api_id    = aws_apigatewayv2_api.tasklah_api.id
+  route_key = "POST /tasks"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
+resource "aws_lambda_permission" "api_gw_permission" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.post_task_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.tasklah_api.execution_arn}/*/*"
+}
+
+# --- Chatbot Route ---
+resource "aws_apigatewayv2_integration" "chatbot_integration" {
+  api_id           = aws_apigatewayv2_api.tasklah_api.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = aws_lambda_function.chatbot_lambda.invoke_arn
+  integration_method = "POST"
+}
+
+resource "aws_apigatewayv2_route" "chatbot_route" {
+  api_id    = aws_apigatewayv2_api.tasklah_api.id
+  route_key = "POST /chatbot"
+  target    = "integrations/${aws_apigatewayv2_integration.chatbot_integration.id}"
+}
+
+resource "aws_lambda_permission" "api_gw_chatbot_permission" {
+  statement_id  = "AllowExecutionFromAPIGatewayChatbot"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.chatbot_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.tasklah_api.execution_arn}/*/*"
+}
+# --- PlaceBid Lambda ---
+resource "aws_lambda_function" "place_bid_lambda" {
+  filename         = data.archive_file.place_bid_zip.output_path
+  function_name    = "TaskLah_PlaceBid"
+  role             = aws_iam_role.lambda_exec_role.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  source_code_hash = data.archive_file.place_bid_zip.output_base64sha256
+
+  environment {
+    variables = {
+      TIDB_CONNECTION_STRING = var.tidb_connection_string
+    }
+  }
+}
+
+data "archive_file" "place_bid_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../backend/dist/placeBid"
+  output_path = "${path.module}/placeBid.zip"
+}
+
+resource "aws_apigatewayv2_integration" "place_bid_integration" {
+  api_id             = aws_apigatewayv2_api.tasklah_api.id
+  integration_type   = "AWS_PROXY"
+  integration_uri    = aws_lambda_function.place_bid_lambda.invoke_arn
+  integration_method = "POST"
+}
+
+resource "aws_apigatewayv2_route" "place_bid_route" {
+  api_id    = aws_apigatewayv2_api.tasklah_api.id
+  route_key = "POST /bids"
+  target    = "integrations/${aws_apigatewayv2_integration.place_bid_integration.id}"
+}
+
+resource "aws_lambda_permission" "api_gw_place_bid_permission" {
+  statement_id  = "AllowExecutionFromAPIGatewayPlaceBid"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.place_bid_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.tasklah_api.execution_arn}/*/*"
+}
+
+# Deploy the API
+resource "aws_apigatewayv2_stage" "api_stage" {
+  api_id      = aws_apigatewayv2_api.tasklah_api.id
+  name        = "$default"
+  auto_deploy = true
+}
+# --- GetTasks Lambda ---
+resource "aws_lambda_function" "get_tasks_lambda" {
+  filename         = data.archive_file.get_tasks_zip.output_path
+  function_name    = "TaskLah_GetTasks"
+  role             = aws_iam_role.lambda_exec_role.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  source_code_hash = data.archive_file.get_tasks_zip.output_base64sha256
+
+  environment {
+    variables = {
+      TIDB_CONNECTION_STRING = var.tidb_connection_string
+    }
+  }
+}
+
+data "archive_file" "get_tasks_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../backend/dist/getTasks"
+  output_path = "${path.module}/getTasks.zip"
+}
+
+resource "aws_apigatewayv2_integration" "get_tasks_integration" {
+  api_id             = aws_apigatewayv2_api.tasklah_api.id
+  integration_type   = "AWS_PROXY"
+  integration_uri    = aws_lambda_function.get_tasks_lambda.invoke_arn
+  integration_method = "POST"
+}
+
+resource "aws_apigatewayv2_route" "get_tasks_route" {
+  api_id    = aws_apigatewayv2_api.tasklah_api.id
+  route_key = "GET /tasks"
+  target    = "integrations/${aws_apigatewayv2_integration.get_tasks_integration.id}"
+}
+
+resource "aws_lambda_permission" "api_gw_get_tasks_permission" {
+  statement_id  = "AllowExecutionFromAPIGatewayGetTasks"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.get_tasks_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.tasklah_api.execution_arn}/*/*"
+}
+# --- AcceptBid Lambda ---
+resource "aws_lambda_function" "accept_bid_lambda" {
+  filename         = data.archive_file.accept_bid_zip.output_path
+  function_name    = "TaskLah_AcceptBid"
+  role             = aws_iam_role.lambda_exec_role.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  source_code_hash = data.archive_file.accept_bid_zip.output_base64sha256
+
+  environment {
+    variables = {
+      TIDB_CONNECTION_STRING = var.tidb_connection_string
+    }
+  }
+}
+
+data "archive_file" "accept_bid_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../backend/dist/acceptBid"
+  output_path = "${path.module}/acceptBid.zip"
+}
+
+resource "aws_apigatewayv2_integration" "accept_bid_integration" {
+  api_id             = aws_apigatewayv2_api.tasklah_api.id
+  integration_type   = "AWS_PROXY"
+  integration_uri    = aws_lambda_function.accept_bid_lambda.invoke_arn
+  integration_method = "POST"
+}
+
+resource "aws_apigatewayv2_route" "accept_bid_route" {
+  api_id    = aws_apigatewayv2_api.tasklah_api.id
+  route_key = "POST /bids/accept"
+  target    = "integrations/${aws_apigatewayv2_integration.accept_bid_integration.id}"
+}
+
+resource "aws_lambda_permission" "api_gw_accept_bid_permission" {
+  statement_id  = "AllowExecutionFromAPIGatewayAcceptBid"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.accept_bid_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.tasklah_api.execution_arn}/*/*"
+}
+# --- CompleteQuest Lambda ---
+resource "aws_lambda_function" "complete_quest_lambda" {
+  filename         = data.archive_file.complete_quest_zip.output_path
+  function_name    = "TaskLah_CompleteQuest"
+  role             = aws_iam_role.lambda_exec_role.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  source_code_hash = data.archive_file.complete_quest_zip.output_base64sha256
+
+  environment {
+    variables = {
+      TIDB_CONNECTION_STRING = var.tidb_connection_string
+    }
+  }
+}
+
+data "archive_file" "complete_quest_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../backend/dist/completeQuest"
+  output_path = "${path.module}/completeQuest.zip"
+}
+
+resource "aws_apigatewayv2_integration" "complete_quest_integration" {
+  api_id             = aws_apigatewayv2_api.tasklah_api.id
+  integration_type   = "AWS_PROXY"
+  integration_uri    = aws_lambda_function.complete_quest_lambda.invoke_arn
+  integration_method = "POST"
+}
+
+resource "aws_apigatewayv2_route" "complete_quest_route" {
+  api_id    = aws_apigatewayv2_api.tasklah_api.id
+  route_key = "POST /quests/complete"
+  target    = "integrations/${aws_apigatewayv2_integration.complete_quest_integration.id}"
+}
+
+resource "aws_lambda_permission" "api_gw_complete_quest_permission" {
+  statement_id  = "AllowExecutionFromAPIGatewayCompleteQuest"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.complete_quest_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.tasklah_api.execution_arn}/*/*"
+}
+
+# ==========================================
+# 6. OUTPUTS
+# ==========================================
+output "api_url" {
+  value       = aws_apigatewayv2_api.tasklah_api.api_endpoint
+  description = "The base URL for your API Gateway"
+}
+
+# ============================================
+# Create Passport Lambda for Genesis Quest
+# ============================================
+
+data "archive_file" "create_passport_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../backend/dist/createPassport"
+  output_path = "${path.module}/createPassport.zip"
+}
+
+resource "aws_lambda_function" "create_passport_lambda" {
+  function_name    = "tasklah-create-passport"
+  role             = aws_iam_role.lambda_exec_role.arn
+  runtime          = "nodejs20.x"
+  handler          = "index.handler"
+  filename         = data.archive_file.create_passport_zip.output_path
+  source_code_hash = data.archive_file.create_passport_zip.output_base64sha256
+  timeout          = 10
+
+  environment {
+    variables = {
+      TIDB_CONNECTION_STRING = var.tidb_connection_string
+    }
+  }
+}
+
+resource "aws_lambda_permission" "api_gw_create_passport_permission" {
+  statement_id  = "AllowAPIGatewayInvokeCreatePassport"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.create_passport_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.tasklah_api.execution_arn}/*/*"
+}
+
+resource "aws_apigatewayv2_integration" "create_passport_integration" {
+  api_id                 = aws_apigatewayv2_api.tasklah_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.create_passport_lambda.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "create_passport_route" {
+  api_id    = aws_apigatewayv2_api.tasklah_api.id
+  route_key = "POST /passport"
+  target    = "integrations/${aws_apigatewayv2_integration.create_passport_integration.id}"
+}
