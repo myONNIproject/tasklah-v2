@@ -31,3 +31,6 @@ terraform.tfvars
 *.tfvars
 *.tfstate
 *.tfstate.*
+infra/.terraform*
+infra/*.tfstate*
+*.zip
