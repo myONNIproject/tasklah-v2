@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';
+const mysql = require('mysql2/promise');
 
 let connection;
 
@@ -9,7 +9,7 @@ async function getConnection() {
   return connection;
 }
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   const headers = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
   const posterId = event.queryStringParameters?.posterId || 'user-123';
   try {

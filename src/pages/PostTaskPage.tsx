@@ -1,10 +1,171 @@
 import { useState, useEffect } from 'react';
+import { useSeniorMode } from '../context/SeniorModeContext'; // or wherever your hook is
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldAlert, AlertTriangle, Send, MapPin, DollarSign, Tag, CheckCircle2, CreditCard } from 'lucide-react';
+
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { ShieldAlert, AlertTriangle, Send, MapPin, DollarSign, Tag, CheckCircle2, CreditCard, Heart, ShoppingCart, Home, Wrench, Shield, ArrowLeft } from 'lucide-react';
 
+// Paste this INSIDE PostTaskPage.tsx, above the main component
+
+ 
+
+const SeniorPostTaskFlow = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
+
+  const [step, setStep] = useState(1);
+
+  const [category, setCategory] = useState('');
+
+  const [details, setDetails] = useState({ location: '', datetime: '', notes: '' });
+
+  const [contact, setContact] = useState({ name: '', phone: '' });
+
+ 
+
+  const cats = [
+
+    { id: 'medical', label: 'Medical Escort', color: 'bg-red-500', icon: Heart },
+
+    { id: 'groceries', label: 'Groceries', color: 'bg-blue-500', icon: ShoppingCart },
+
+    { id: 'cleaning', label: 'Cleaning', color: 'bg-amber-500', icon: Home },
+
+    { id: 'tech', label: 'Tech Help', color: 'bg-emerald-500', icon: Wrench },
+
+  ];
+
+ 
+
+  const CatIcon = ({ icon: I }: { icon: any }) => <I size={40} strokeWidth={2} />;
+
+ 
+
+  if (step === 1) return (
+
+    <div className="p-6 max-w-md mx-auto">
+
+      <h1 className="text-3xl font-bold text-center mb-8">What help do you need?</h1>
+
+      <div className="grid grid-cols-2 gap-4">
+
+        {cats.map(c => (
+
+          <button key={c.id} onClick={() => { setCategory(c.id); setStep(2); }}
+
+            className={`${c.color} text-white p-6 rounded-2xl shadow-lg active:scale-95 transition-transform flex flex-col items-center gap-3`}>
+
+            <CatIcon icon={c.icon} />
+
+            <span className="text-xl font-bold">{c.label}</span>
+
+          </button>
+
+        ))}
+
+      </div>
+
+      <div className="mt-8 flex items-center justify-center gap-2 text-gray-400">
+
+        <Shield size={20} /> <span className="text-sm font-medium">TRINITY OF TRUST PROTECTED</span>
+
+      </div>
+
+    </div>
+
+  );
+
+ 
+
+  if (step === 2) return (
+
+    <div className="p-6 max-w-md mx-auto">
+
+      <button onClick={() => setStep(1)} className="mb-4 flex items-center gap-2 text-gray-500 text-lg"><ArrowLeft size={20} /> Back</button>
+
+      <h1 className="text-2xl font-bold mb-6">{cats.find(c => c.id === category)?.label} Help</h1>
+
+      <div className="space-y-5">
+
+        <div><label className="block text-lg font-bold mb-2">Where?</label>
+
+          <input className="w-full p-4 text-xl border-2 rounded-xl focus:border-blue-500 outline-none" placeholder="Your address" value={details.location} onChange={e => setDetails({...details, location: e.target.value})} /></div>
+<div>
+  <label className="block text-lg font-bold mb-2">What day?</label>
+  <input
+    type="date"
+    value={details.datetime.split(' ')[0] || ''}
+    onChange={(e) => setDetails({...details, datetime: e.target.value + ' ' + (details.datetime.split(' ')[1] || '')})}
+    className="w-full p-4 text-xl border-2 rounded-xl focus:border-blue-500 outline-none"
+  />
+</div>
+
+<div>
+  <label className="block text-lg font-bold mb-2">What time?</label>
+  <div className="grid grid-cols-3 gap-3">
+    {['Morning', 'Afternoon', 'Evening'].map((time) => (
+      <button
+        key={time}
+        onClick={() => setDetails({...details, datetime: (details.datetime.split(' ')[0] || '') + ' ' + time})}
+        className={`p-4 rounded-xl text-lg font-bold border-2 transition-all ${
+          details.datetime.includes(time) 
+            ? 'bg-blue-500 text-white border-blue-500' 
+            : 'bg-white text-gray-700 border-gray-300'
+        }`}
+      >
+        {time}
+      </button>
+    ))}
+  </div>
+</div>
+
+        <div><label className="block text-lg font-bold mb-2">Anything else?</label>
+
+          <textarea className="w-full p-4 text-xl border-2 rounded-xl focus:border-blue-500 outline-none" rows={3} placeholder="Tell us more..." value={details.notes} onChange={e => setDetails({...details, notes: e.target.value})} /></div>
+
+        <button onClick={() => setStep(3)} className="w-full bg-blue-600 text-white text-2xl font-bold p-5 rounded-2xl shadow-lg active:scale-95 transition-transform">Next →</button>
+
+      </div>
+
+    </div>
+
+  );
+
+ 
+
+  return (
+
+    <div className="p-6 max-w-md mx-auto">
+
+      <button onClick={() => setStep(2)} className="mb-4 flex items-center gap-2 text-gray-500 text-lg"><ArrowLeft size={20} /> Back</button>
+
+      <h1 className="text-2xl font-bold mb-2">Almost done!</h1>
+
+      <p className="text-gray-500 mb-6">Emergency contact (optional)</p>
+
+      <div className="space-y-5 mb-6">
+
+        <input className="w-full p-4 text-xl border-2 rounded-xl focus:border-blue-500 outline-none" placeholder="Contact name" value={contact.name} onChange={e => setContact({...contact, name: e.target.value})} />
+
+        <input className="w-full p-4 text-xl border-2 rounded-xl focus:border-blue-500 outline-none" placeholder="Phone number" value={contact.phone} onChange={e => setContact({...contact, phone: e.target.value})} />
+
+      </div>
+
+      <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 mb-6">
+
+        <div className="flex items-center gap-2 mb-1"><Shield size={18} className="text-amber-700" /><h3 className="text-lg font-bold text-amber-800">Senior Safety Net</h3></div>
+
+        <p className="text-amber-700 text-sm">We'll notify your contact when a Tasker accepts.</p>
+
+      </div>
+
+      <button onClick={() => onSubmit({ isSeniorMode: true, seniorCategory: category, ...details, emergencyContact: contact })} className="w-full bg-red-500 text-white text-2xl font-bold p-5 rounded-2xl shadow-lg active:scale-95 transition-transform">YES, POST HELP!</button>
+
+    </div>
+
+  );
+
+};
 // Initialize Stripe outside component
 const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
 
@@ -245,8 +406,49 @@ const dbResponse = await fetch(
     </form>
   );
 };
-
 export const PostTaskPage = () => {
+  const navigate = useNavigate();
+  const { isSeniorMode } = useSeniorMode();
+
+const handleSeniorSubmit = async (data: any) => {
+  const DEMO_MODE = true;
+  alert('Posting your help request...');
+  
+  if (DEMO_MODE) {
+    await new Promise(r => setTimeout(r, 1000));
+    alert('Posted successfully!');
+    navigate('/browse');
+    return;
+  }
+  
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: data.seniorCategory,
+        category: data.seniorCategory,
+        location: data.location,
+        bounty: '15',
+        description: data.notes || 'No notes'
+      })
+    });
+    
+    if (response.ok) {
+      alert('Posted!');
+      navigate('/browse');
+    } else {
+      alert('Server error: ' + response.status);
+    }
+  } catch (error) {
+    alert('Connection failed');
+  }
+};
+if (isSeniorMode) {
+
+  return <SeniorPostTaskFlow onSubmit={handleSeniorSubmit} />;
+}
+
   return (
     <div className="p-4 bg-slate-50 min-h-screen">
       <div className="mb-6 mt-4">

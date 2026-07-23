@@ -4,3 +4,25 @@
 body {
   @apply bg-slate-50 text-slate-900;
 }
+/* Custom properties for the two modes */
+.standard-theme {
+  --bg-primary: #0f172a;
+  --text-main: #f8fafc;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  min-height: 100vh;
+}
+
+.senior-theme {
+  --bg-primary: #f1f5f9; /* Soft light gray */
+  --text-main: #0f172a;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  min-height: 100vh;
+}
+
+/* Senior Mode specific button overrides */
+.senior-theme button {
+  font-size: 1.25rem !important; /* Forces larger text */
+  letter-spacing: -0.025em;
+}

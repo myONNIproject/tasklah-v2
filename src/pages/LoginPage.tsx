@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Lock, Smartphone, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSeniorMode } from '../context/SeniorModeContext';
 
+ 
 export const LoginPage = () => {
   const navigate = useNavigate();
   const [showQR, setShowQR] = useState(false);
   const [scanStatus, setScanStatus] = useState<'waiting' | 'scanned' | 'success'>('waiting');
+ const { isSeniorMode } = useSeniorMode();
 
   useEffect(() => {
     if (showQR) {
@@ -120,4 +123,71 @@ export const LoginPage = () => {
       </AnimatePresence>
     </div>
   );
+  <div className={`min-height-screen flex flex-col items-center justify-center p-6 ${isSeniorMode ? 'bg-white' : 'bg-slate-900'}`}>
+
+      <h1 className={`font-black tracking-tighter mb-2 ${isSeniorMode ? 'text-6xl text-red-600' : 'text-4xl text-white'}`}>
+
+        TaskLah!
+
+      </h1>
+
+      
+
+      <p className={`font-bold mb-12 ${isSeniorMode ? 'text-2xl text-slate-800' : 'text-slate-400'}`}>
+
+        {isSeniorMode ? 'Tap below to log in safely' : 'Welcome back.'}
+
+      </p>
+
+ 
+
+      {/* The Mega-Button for Seniors */}
+
+      <button className={`w-full flex items-center justify-center gap-4 rounded-3xl shadow-2xl transition-all active:scale-95 ${
+
+        isSeniorMode 
+
+        ? 'py-10 bg-red-600 border-8 border-red-100' 
+
+        : 'py-4 bg-red-500'
+
+      }`}>
+
+        <img src="/singpass-logo.png" className={isSeniorMode ? 'h-12' : 'h-6'} alt="Singpass" />
+
+        <span className={`font-black uppercase ${isSeniorMode ? 'text-4xl text-white' : 'text-xl text-white'}`}>
+
+          Log In
+
+        </span>
+
+      </button>
+
+ 
+
+      {!isSeniorMode && (
+
+        <button className="mt-8 text-slate-500 font-bold uppercase tracking-widest text-xs">
+
+          Other Login Methods {'>'}
+
+        </button>
+
+      )}
+
+      
+
+      {isSeniorMode && (
+
+        <p className="mt-12 text-center text-slate-500 font-bold text-xl">
+
+          🔒 Secure & PDPA Compliant
+
+        </p>
+
+      )}
+
+    </div>
+
 };
+

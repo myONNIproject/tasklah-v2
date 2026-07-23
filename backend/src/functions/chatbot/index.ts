@@ -24,7 +24,7 @@ export const handler = async (event: any) => {
       ]
     };
 
-            const command = new InvokeModelCommand({
+        const command = new InvokeModelCommand({
       // We MUST use the APAC inference profile ID to bypass the AWS restriction
       modelId: "apac.anthropic.claude-3-sonnet-20240229-v1:0", 
       contentType: "application/json",
