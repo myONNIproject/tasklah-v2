@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, MapPin, Heart, ShoppingCart, Home, Wrench, Circle, Pill, Languages, Check, ArrowLeft, Phone, Shield } from 'lucide-react';
 import { useSeniorMode } from '../context/SeniorModeContext';
+import { supabase } from '../supabaseClient';
 
 // --- MEDICAL ESCORT FLOW (Defined Inline to avoid import errors) ---
 interface MedicalEscortFlowProps {
@@ -193,27 +194,34 @@ export function BrowsePage() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch("https://021oj8qc13.execute-api.ap-southeast-1.amazonaws.com/tasks")
-      .then(res => res.json())
-      .then(data => {
-        const mapped = (data.tasks || []).map((t) => ({
-          id: t.id,
-          title: t.title,
-          loc: t.location,
-          price: t.bounty,
-          cat: t.category,
-          trust: 85,
-          hot: false
-        }));
-        setTasks(mapped);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch tasks:", err);
-        setLoading(false);
-      });
-  }, []);
+ useEffect(() => {
+  const fetchTasks = async () => {
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error("Failed to fetch tasks:", error);
+      setLoading(false);
+      return;
+    }
+    
+    const mapped = (data || []).map((t) => ({
+      id: t.id,
+      title: t.title,
+      loc: t.location,
+      price: t.budget,
+      cat: t.category,
+      trust: 85,
+      hot: false,
+    }));
+    setTasks(mapped);
+    setLoading(false);
+  };
+  
+  fetchTasks();
+}, []);
 
   if (isSeniorMode && activeView === 'medical') {
     return (

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSeniorMode } from '../context/SeniorModeContext'; // or wherever your hook is
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-
+import { supabase } from '../supabaseClient';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { ShieldAlert, AlertTriangle, Send, MapPin, DollarSign, Tag, CheckCircle2, CreditCard, Heart, ShoppingCart, Home, Wrench, Shield, ArrowLeft } from 'lucide-react';
@@ -241,17 +241,22 @@ const API_URL = "https://021oj8qc13.execute-api.ap-southeast-1.amazonaws.com/tas
         posterId: 'user-123', 
       };
 
-const dbResponse = await fetch(
+const { data: dbData, error: dbError } = await supabase
+  .from('tasks')
+  .insert([{
+    title: taskPayload.title,
+    description: taskPayload.description || '',
+    category: taskPayload.category,
+    location: taskPayload.location,
+    budget: taskPayload.bounty || taskPayload.budget || 0,
+    status: 'open',
+    requester_name: taskPayload.requesterName || 'Anonymous'
+  }])
+  .select();
 
-  "https://021oj8qc13.execute-api.ap-southeast-1.amazonaws.com/tasks",{
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(taskPayload),
-      });
-
-      if (!dbResponse.ok) {
-        throw new Error(`Failed to save task to database: ${dbResponse.status}`);
-      }
+if (dbError) {
+  throw new Error('Failed to save task: ' + dbError.message);
+}
       
       // TRIGGER THE SUCCESS ANIMATION!
       setShowSuccess(true);
@@ -422,27 +427,30 @@ const handleSeniorSubmit = async (data: any) => {
   }
   
   try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: data.seniorCategory,
-        category: data.seniorCategory,
-        location: data.location,
-        bounty: '15',
-        description: data.notes || 'No notes'
-      })
-    });
-    
-    if (response.ok) {
-      alert('Posted!');
+  const { data: responseData, error: responseError } = await supabase
+    .from('tasks')
+    .insert([{
+      title: data.seniorCategory,
+      category: data.seniorCategory,
+      location: data.location,
+      budget: 15,
+      description: data.notes || 'No notes',
+      status: 'open',
+      requester_name: 'Anonymous'
+    }])
+    .select();
+
+  if (responseError) {
+    alert('Server error: ' + responseError.message);
+  } else {
+    setShowSuccess(true);
+    setTimeout(() => {
       navigate('/browse');
-    } else {
-      alert('Server error: ' + response.status);
-    }
-  } catch (error) {
-    alert('Connection failed');
+    }, 1500);
   }
+} catch (error) {
+  alert('Connection failed!');
+}
 };
 if (isSeniorMode) {
 
