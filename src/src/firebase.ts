@@ -2,12 +2,13 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCdl29jRzF1MRHZPrEqzOoZjsKNUcgVerg",
+  authDomain: "tasklah-v2.firebaseapp.com",
+  projectId: "tasklah-v2",
+  storageBucket: "tasklah-v2.firebasestorage.app",
+  messagingSenderId: "158439171358",
+  appId: "1:158439171358:web:4dabf09334d9e27191150f",
+  measurementId: "G-QQWLWMFMLW"
 };
 
 const app = initializeApp(firebaseConfig);
