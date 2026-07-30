@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useSeniorMode } from '../context/SeniorModeContext'; // or wherever your hook is
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../supabaseClient';
+import { collection, addDoc } from 'firebase/firestore';
+
+import { db } from '../firebase';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { ShieldAlert, AlertTriangle, Send, MapPin, DollarSign, Tag, CheckCircle2, CreditCard, Heart, ShoppingCart, Home, Wrench, Shield, ArrowLeft } from 'lucide-react';
@@ -233,30 +235,31 @@ const API_URL = "https://021oj8qc13.execute-api.ap-southeast-1.amazonaws.com/tas
       console.log("Simulating secure Stripe hold with secret:", clientSecret);
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      const taskPayload = {
-        title,
-        category,
-        bounty: parseFloat(bounty),
-        location,
-        posterId: 'user-123', 
-      };
+     
 
-const { data: dbData, error: dbError } = await supabase
-  .from('tasks')
-  .insert([{
-    title: taskPayload.title,
-    description: taskPayload.description || '',
-    category: taskPayload.category,
-    location: taskPayload.location,
-    budget: taskPayload.bounty || taskPayload.budget || 0,
-    status: 'open',
-    requester_name: taskPayload.requesterName || 'Anonymous'
-  }])
-  .select();
+const taskPayload = {
 
-if (dbError) {
-  throw new Error('Failed to save task: ' + dbError.message);
-}
+  title,
+
+  description: description || '',
+
+  category,
+
+  location,
+
+  budget: parseFloat(bounty) || 0,
+
+  status: 'open',
+
+  requester_name: requesterName || 'Anonymous',
+
+  created_at: new Date().toISOString(),  // <-- ADD THIS LINE
+
+};
+
+ 
+
+await addDoc(collection(db, 'tasks'), taskPayload);
       
       // TRIGGER THE SUCCESS ANIMATION!
       setShowSuccess(true);
@@ -426,30 +429,19 @@ const handleSeniorSubmit = async (data: any) => {
     return;
   }
   
-  try {
-  const { data: responseData, error: responseError } = await supabase
-    .from('tasks')
-    .insert([{
-      title: data.seniorCategory,
-      category: data.seniorCategory,
-      location: data.location,
-      budget: 15,
-      description: data.notes || 'No notes',
-      status: 'open',
-      requester_name: 'Anonymous'
-    }])
-    .select();
-
-  if (responseError) {
-    alert('Server error: ' + responseError.message);
-  } else {
-    setShowSuccess(true);
-    setTimeout(() => {
-      navigate('/browse');
-    }, 1500);
-  }
-} catch (error) {
-  alert('Connection failed!');
+try {
+  await addDoc(collection(db, 'tasks'), taskPayload);
+  setIsSubmitting(false);  // stop loading spinner
+  setShowSuccess(true);    // trigger animation
+  
+  setTimeout(() => {
+    navigate('/browse');
+  }, 1500);
+  
+} catch (error: any) {
+  console.error("Task creation failed:", error);
+  alert(`Error details: ${error.message}`);
+  setIsSubmitting(false);
 }
 };
 if (isSeniorMode) {

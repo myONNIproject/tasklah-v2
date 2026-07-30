@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Search, MapPin, Heart, ShoppingCart, Home, Wrench, Circle, Pill, Languages, Check, ArrowLeft, Phone, Shield } from 'lucide-react';
 import { useSeniorMode } from '../context/SeniorModeContext';
-import { supabase } from '../supabaseClient';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 
+import { db } from '../firebase';
 // --- MEDICAL ESCORT FLOW (Defined Inline to avoid import errors) ---
 interface MedicalEscortFlowProps {
   onBack: () => void;
@@ -195,11 +196,13 @@ export function BrowsePage() {
   const [loading, setLoading] = useState(true);
 
  useEffect(() => {
-  const fetchTasks = async () => {
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .order('created_at', { ascending: false });
+ const q = query(collection(db, 'tasks'), orderBy('created_at', 'desc'));
+
+const querySnapshot = await getDocs(q);
+
+const tasks = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+setTasks(tasks);
     
     if (error) {
       console.error("Failed to fetch tasks:", error);
