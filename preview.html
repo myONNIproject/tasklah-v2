@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskLah! Redesign - Clickable Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#3b5bdb; --blue-deep:#2c3e9e; --blue-soft:#e3e9ff;
+  --green:#2f9e44; --green-deep:#237032; --green-soft:#d8f5d8;
+  --red:#e03131; --red-soft:#ffe3e3;
+  --amber:#f59f00; --ink:#1e2430; --muted:#6b7280;
+  --paper:#fafaf7; --card:#ffffff; --line:#e5e7eb;
+  --radius:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Nunito',-apple-system,sans-serif;
+  background:#f1efe9;
+  background-image:radial-gradient(#d8d5cc 1px,transparent 1px);
+  background-size:22px 22px;
+  color:var(--ink);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px;
+}
+.phone{
+  width:390px;height:812px;background:#9aa0a6;border-radius:54px;padding:12px;
+  box-shadow:0 30px 60px rgba(0,0,0,.35),inset 0 0 0 2px #7d8288;
+  position:relative;flex-shrink:0;
+}
+.screen-wrap{
+  width:100%;height:100%;background:var(--paper);border-radius:42px;overflow:hidden;position:relative;
+  display:flex;flex-direction:column;
+}
+.notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:160px;height:26px;background:#9aa0a6;border-radius:0 0 16px 16px;z-index:60}
+h1,h2,h3,.display{font-family:'Baloo 2','Nunito',sans-serif}
+
+/* ===== header ===== */
+.header{background:#fff;padding:52px 18px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:8px}
+.logo svg{width:30px;height:30px}
+.logo-text{font-family:'Baloo 2';font-weight:800;font-size:20px;line-height:1}
+.logo-tag{font-size:6.5px;letter-spacing:.12em;color:var(--muted);font-weight:700;text-transform:uppercase}
+.header-icons{display:flex;align-items:center;gap:14px;color:var(--ink)}
+.icon-btn{background:none;border:none;cursor:pointer;font-size:20px;position:relative}
+.icon-btn .dot{position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--red);border-radius:50%}
+.burger{display:flex;flex-direction:column;gap:4px;cursor:pointer}
+.burger span{width:22px;height:2.5px;background:var(--ink);border-radius:2px;display:block}
+
+/* ===== senior mode ===== */
+.senior-row{padding:10px 18px 0;display:flex;justify-content:flex-end;flex-shrink:0}
+.senior-btn{
+  background:var(--green);color:#fff;border:none;font-family:'Baloo 2';font-weight:700;letter-spacing:.05em;
+  padding:9px 20px;border-radius:10px;font-size:14px;cursor:pointer;box-shadow:0 3px 0 var(--green-deep);transition:.2s;
+}
+.senior-btn.on{background:var(--green-deep);box-shadow:0 1px 0 var(--green-deep);transform:translateY(2px)}
+body.senior .screen{font-size:19px}
+body.senior .task-card,body.senior .row{padding:18px}
+
+/* ===== content ===== */
+.content{flex:1;overflow-y:auto;padding:12px 18px 110px;scrollbar-width:none}
+.content::-webkit-scrollbar{display:none}
+.screen{display:none;animation:fadeIn .25s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ===== buttons ===== */
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:15px;border-radius:12px;
+  font-family:'Baloo 2';font-weight:700;font-size:16px;border:none;cursor:pointer;transition:.15s;margin-bottom:14px}
+.btn:active{transform:scale(.98)}
+.btn-white{background:#fff;border:2px solid var(--ink);color:var(--ink);box-shadow:0 3px 0 var(--ink)}
+.btn-outline{background:#fff;border:2px solid var(--line);color:var(--ink);box-shadow:0 3px 0 var(--line)}
+.btn-blue{background:var(--blue);color:#fff;box-shadow:0 3px 0 var(--blue-deep)}
+.btn-disabled{opacity:.55;cursor:not-allowed;position:relative}
+.soon{font-size:10px;background:var(--amber);color:#fff;padding:2px 8px;border-radius:99px;font-family:'Nunito';font-weight:800;letter-spacing:.05em}
+.badge-soon{position:absolute;top:-8px;right:-8px}
+
+/* ===== login ===== */
+.login-hero{display:flex;flex-direction:column;align-items:center;padding:56px 0 8px}
+.login-hero .biglogo svg{width:64px;height:64px}
+.login-hero h1{font-size:40px;font-weight:800;letter-spacing:-.02em}
+.login-hero p{font-size:10px;letter-spacing:.18em;font-weight:700;color:var(--ink);text-transform:uppercase;margin-top:2px}
+.mode-label{font-family:'Baloo 2';font-weight:700;font-size:17px;margin:18px 0 10px}
+.auth-note{font-size:11px;color:var(--muted);text-align:center;margin-top:2px}
+.mascot-strip{position:absolute;bottom:26px;right:20px;display:flex;align-items:flex-end;gap:8px}
+.mascot-strip svg{width:64px;height:78px}
+.kaki-cta{font-size:12px;font-weight:700;color:var(--ink);line-height:1.5}
+.kaki-cta a{color:var(--blue);text-decoration:underline;cursor:pointer}
+
+/* ===== forms ===== */
+.field{margin-bottom:14px}
+.field label{display:block;font-weight:800;font-size:13px;margin-bottom:5px}
+.field label .req{color:var(--red);font-style:italic;font-weight:600;font-size:12px;margin-left:6px}
+.field input,.field textarea,.field select{
+  width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:'Nunito';
+  font-size:14px;background:#fff;outline:none;transition:.15s
+}
+.field input:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
+.field textarea{height:84px;resize:none}
+.check-row{display:flex;align-items:center;gap:8px;font-size:12.5px;margin:4px 0 16px}
+.check-row a{color:var(--blue);font-weight:700}
+.or-divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;font-weight:700;margin:6px 0 14px}
+.or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--line)}
+
+/* ===== home ===== */
+.section-title{font-family:'Baloo 2';font-weight:800;font-size:20px;margin:10px 0 10px}
+.carousel{position:relative;border-radius:14px;overflow:hidden;height:170px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:flex-end;padding:16px;color:#fff}
+.slide.active{display:flex}
+.slide h3{font-size:18px}.slide p{font-size:12.5px;opacity:.9}
+.slide-1{background:linear-gradient(135deg,#3b5bdb,#7048e8)}
+.slide-2{background:linear-gradient(135deg,#2f9e44,#66a80f)}
+.slide-3{background:linear-gradient(135deg,#e8590c,#f08c00)}
+.car-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.85);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:15px;z-index:5;display:flex;align-items:center;justify-content:center}
+.car-prev{left:8px}.car-next{right:8px}
+.dots{display:flex;gap:6px;justify-content:flex-end;margin:10px 2px 4px}
+.dots i{width:8px;height:8px;border-radius:50%;background:#cfd4dc;cursor:pointer}
+.dots i.on{background:var(--ink)}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);font-size:13.5px}
+th{background:#d9dde3;padding:10px;font-family:'Baloo 2';font-size:13.5px}
+td{padding:11px 10px;text-align:center}
+tr:nth-child(odd) td{background:#f6d5d5}
+tr:nth-child(even) td{background:#fff}
+td.name{text-align:left;font-weight:700}
+.medal{font-size:15px}
+
+/* ===== task cards ===== */
+.task-card{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:15px;margin-bottom:13px;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.task-card h3{font-size:16.5px;margin-bottom:6px}
+.meta{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--ink)}
+.meta b{font-weight:800}
+.card-foot{display:flex;justify-content:flex-end;margin-top:10px}
+.pill-btn{border:none;border-radius:9px;padding:7px 18px;font-family:'Baloo 2';font-weight:700;font-size:13px;cursor:pointer;color:#fff}
+.pill-info{background:#74a5e0}.pill-done{background:#51a05b}.pill-fail{background:#c92a2a}
+.pill-info:active,.pill-done:active,.pill-fail:active{transform:scale(.95)}
+.tier-tag{font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:99px;text-transform:uppercase;margin-left:auto}
+.tier-normal{background:var(--blue-soft);color:var(--blue-deep)}
+.tier-senior{background:var(--green-soft);color:var(--green-deep)}
+.tier-urgent{background:var(--red-soft);color:var(--red)}
+.tier-corporate{background:#ede7f6;color:#5e35b1}
+.tier-bonus{background:#fff3bf;color:#997a00}
+
+/* ===== myquest ===== */
+.quest-card h3{font-size:18px}
+.quest-card .meta{margin:6px 0}
+
+/* ===== profile ===== */
+.pro-pill{display:inline-block;background:#f28b8b;color:#fff;font-family:'Baloo 2';font-weight:700;padding:5px 20px;border-radius:10px;font-size:15px;box-shadow:0 2px 0 #d66}
+.profile-top{display:flex;align-items:center;gap:16px;margin:14px 0 6px}
+.avatar-add{width:64px;height:64px;border-radius:50%;background:#fff;border:2px dashed var(--muted);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--muted);cursor:pointer}
+.xp{flex:1}
+.xp-row{display:flex;justify-content:space-between;font-size:13px;font-weight:800;margin-bottom:5px}
+.xp-bar{height:16px;border:2px solid var(--ink);border-radius:8px;overflow:hidden;background:#fff}
+.xp-fill{width:70%;height:100%;background:#a9d8a2;border-radius:5px}
+.stat-line{font-family:'Baloo 2';font-weight:700;font-size:15.5px;margin:7px 0}
+.stat-line b{font-weight:800}
+.badges{display:flex;gap:14px;margin:10px 0 4px}
+.badge-circle{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:7px;font-weight:800;box-shadow:0 2px 5px rgba(0,0,0,.15);color:#fff;line-height:1.3}
+.badge-pioneer{background:radial-gradient(circle at 30% 30%,#4263eb,#1c3ca8)}
+.badge-rookie{background:radial-gradient(circle at 30% 30%,#94d82d,#5c940d)}
+.rating-row{display:flex;align-items:center;gap:8px;margin:14px 0 20px}
+.stars{color:var(--amber);font-size:20px;letter-spacing:2px}
+.rating-row .num{font-weight:800;font-size:14px}
+.referral-btn{width:100%;padding:16px;border:none;border-radius:10px;background:#a5c4f7;font-family:'Baloo 2';font-weight:700;font-size:16px;color:var(--ink);cursor:pointer;box-shadow:0 3px 0 #7d9fe0}
+.referral-code{display:none;margin-top:10px;background:#fff;border:2px dashed var(--blue);border-radius:10px;padding:12px;text-align:center;font-weight:800;letter-spacing:.1em;font-size:15px;color:var(--blue)}
+.referral-code.show{display:block}
+
+/* ===== payment sheet ===== */
+.overlay{position:absolute;inset:0;background:rgba(20,24,40,.55);z-index:40;display:none;align-items:flex-end}
+.overlay.show{display:flex}
+.sheet{background:#fff;width:100%;border-radius:24px 24px 0 0;padding:24px 22px 30px;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
+.sheet h3{font-size:20px;margin-bottom:4px}
+.sheet .sub{font-size:12.5px;color:var(--muted);margin-bottom:16px}
+.escrow-note{background:var(--green-soft);border-radius:10px;padding:10px 12px;font-size:12px;font-weight:700;color:var(--green-deep);margin-bottom:14px}
+.success{position:absolute;inset:0;background:var(--paper);z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}
+.success.show{display:flex}
+.success .party{font-size:64px;animation:bounce .6s ease}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.success h2{font-size:24px;margin:12px 0 6px}
+.success p{font-size:13.5px;color:var(--muted);max-width:260px;line-height:1.5}
+.confetti{position:absolute;width:8px;height:8px;top:-10px;animation:fall 2.2s linear forwards}
+@keyframes fall{to{transform:translateY(850px) rotate(360deg);opacity:0}}
+
+/* ===== toast ===== */
+.toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
+  font-size:12.5px;font-weight:700;padding:10px 18px;border-radius:99px;opacity:0;transition:.3s;z-index:70;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%)}
+
+/* ===== bottom nav ===== */
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:2px solid var(--ink);
+  display:flex;justify-content:space-around;padding:8px 4px 20px;z-index:30}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;
+  font-size:10.5px;font-weight:700;color:var(--ink);font-family:'Nunito';padding:2px 6px}
+.nav-item svg{width:26px;height:26px;stroke:var(--ink);fill:none;stroke-width:2}
+.nav-item.active{color:var(--green)}
+.nav-item.active svg{stroke:var(--green);fill:var(--green-soft)}
+.nav-item.active .nav-doc{fill:var(--green)}
+
+/* ===== ONNI chat ===== */
+.onni-btn{position:absolute;bottom:92px;left:14px;z-index:75;background:none;border:none;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:2px}
+.onni-btn .mascot{width:56px;height:68px;filter:drop-shadow(0 3px 5px rgba(0,0,0,.22));transition:transform .2s}
+.onni-btn:active .mascot{transform:scale(.92)}
+.onni-btn .onni-label{font-size:9px;font-weight:800;letter-spacing:.08em;background:#fff;border:1.5px solid var(--ink);
+  padding:2px 9px;border-radius:99px;box-shadow:0 2px 0 var(--ink);font-family:'Baloo 2'}
+.onni-btn .onni-ping{position:absolute;top:0;right:0;width:12px;height:12px;background:var(--red);border-radius:50%;
+  border:2px solid #fff;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+.onni-chat{position:absolute;left:10px;right:10px;bottom:90px;max-height:430px;background:#fff;border-radius:20px;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);z-index:78;display:none;flex-direction:column;overflow:hidden;border:2px solid var(--ink)}
+.onni-chat.show{display:flex}
+.onni-head{background:var(--blue);color:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.onni-head .mascot{width:34px;height:42px;background:#fff;border-radius:50%;padding:2px}
+.onni-head b{font-family:'Baloo 2';font-size:16px;display:block;line-height:1}
+.onni-head small{font-size:10px;opacity:.85}
+.onni-close{margin-left:auto;background:none;border:none;color:#fff;font-size:18px;cursor:pointer}
+.onni-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--paper)}
+.msg{max-width:82%;padding:9px 12px;border-radius:14px;font-size:12.5px;line-height:1.45}
+.msg.bot{background:#fff;border:1.5px solid var(--line);border-bottom-left-radius:4px;align-self:flex-start}
+.msg.me{background:var(--blue);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.onni-quick{display:flex;gap:6px;padding:8px 12px;background:#fff;border-top:1px solid var(--line);flex-wrap:wrap}
+.onni-quick button{font-size:11px;font-weight:700;border:1.5px solid var(--blue);color:var(--blue);background:#fff;
+  border-radius:99px;padding:6px 11px;cursor:pointer}
+.onni-quick button:active{background:var(--blue-soft)}
+.onni-input{display:flex;gap:8px;padding:10px 12px;background:#fff;border-top:1px solid var(--line)}
+.onni-input input{flex:1;border:1.5px solid var(--line);border-radius:99px;padding:9px 14px;font-family:'Nunito';font-size:13px;outline:none}
+.onni-input input:focus{border-color:var(--blue)}
+.onni-input button{border:none;background:var(--blue);color:#fff;border-radius:50%;width:38px;height:38px;cursor:pointer;font-size:15px}
+
+/* ===== hamburger drawer ===== */
+.drawer-bg{position:absolute;inset:0;background:rgba(20,24,40,.45);z-index:79;display:none}
+.drawer-bg.show{display:block}
+.drawer{position:absolute;top:0;right:0;bottom:0;width:76%;background:#fff;z-index:80;transform:translateX(105%);
+  transition:transform .28s cubic-bezier(.2,.8,.3,1);border-radius:24px 0 0 24px;padding:56px 18px 24px;box-shadow:-8px 0 30px rgba(0,0,0,.15)}
+.drawer.open{transform:none}
+.drawer-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.drawer-head .logo-text{font-size:18px}
+.drawer-user{font-size:11.5px;color:var(--muted);margin-bottom:16px}
+.menu-item{display:flex;align-items:center;gap:12px;width:100%;background:none;border:none;border-bottom:1px dashed var(--line);
+  padding:13px 4px;font-family:'Baloo 2';font-weight:700;font-size:15.5px;color:var(--ink);cursor:pointer;text-align:left}
+.menu-item .mi{width:22px;text-align:center}
+.menu-item small{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--blue);background:var(--blue-soft);padding:2px 8px;border-radius:99px}
+.menu-item.danger{color:var(--red)}
+.drawer-note{font-size:10.5px;color:var(--muted);margin-top:14px;line-height:1.5}
+
+/* ===== side panel caption ===== */
+.side-panel{max-width:300px;margin-left:40px}
+.side-panel h2{font-family:'Baloo 2';font-size:26px;margin-bottom:8px}
+.side-panel p{font-size:13.5px;line-height:1.6;color:#4b5563;margin-bottom:14px}
+.screen-list{list-style:none}
+.screen-list li{padding:7px 0;border-bottom:1px dashed #d5d1c6;font-size:13px;cursor:pointer;font-weight:700;color:var(--ink);transition:.15s}
+.screen-list li:hover{color:var(--blue)}
+.screen-list li span{color:var(--muted);font-weight:400;font-size:11.5px;display:block}
+@media(max-width:860px){.side-panel{display:none}}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="screen-wrap">
+
+    <!-- ============ LOGIN ============ -->
+    <div class="screen active" id="scr-login">
+      <div class="login-hero">
+        <div class="biglogo" id="logo-big"></div>
+        <h1>TaskLah!</h1>
+        <p>Your Everyday Quests, Rewarded.</p>
+      </div>
+      <div class="content" style="padding-top:0">
+        <p class="mode-label">Standard Mode Login via:</p>
+        <div style="display:flex;gap:12px;margin-bottom:20px">
+          <button class="btn btn-outline btn-disabled" style="margin:0" onclick="toast('Corppass coming soon - not wired yet')"><b style="font-size:15px">Corp</b>Pass<span class="soon badge-soon">SOON</span></button>
+          <button class="btn btn-outline btn-disabled" style="margin:0;font-weight:800;color:var(--red)" onclick="toast('Singpass coming soon - not wired yet')">singpass<span class="soon badge-soon">SOON</span></button>
+        </div>
+        <p class="mode-label">Vanguard Mode Login via:</p>
+        <button class="btn btn-white" onclick="go('home')"><b style="font-size:19px">G</b> Google Login</button>
+        <button class="btn btn-white" onclick="go('home')">&#9993; Email Login</button>
+        <p class="auth-note">Fast and secure - powered by Kinde. Already live on tasklah-v2!</p>
+      </div>
+      <div class="mascot-strip">
+        <p class="kaki-cta">Not a kaki yet?<br><a onclick="go('signup')">Sign up to be a kaki now.</a></p>
+        <div class="mascot" id="mascot-1"></div>
+      </div>
+    </div>
+
+    <!-- ============ SIGNUP ============ -->
+    <div class="screen" id="scr-signup">
+      <div class="login-hero" style="padding-top:46px">
+        <div id="logo-signup" style="display:flex;align-items:center;gap:8px"></div>
+      </div>
+      <div class="content" style="padding-top:8px">
+        <h2 style="font-size:24px;margin-bottom:14px">Sign Up</h2>
+        <div class="field"><label>Display Name:</label><input placeholder="e.g. Ah Beng the Builder"></div>
+        <div class="field"><label>Email:</label><input type="email" placeholder="you@example.com"></div>
+        <div class="field"><label>Mobile Number:</label><input type="tel" placeholder="+65 9123 4567"></div>
+        <div class="field"><label>Password:</label><input type="password" placeholder="Min 8 characters"></div>
+        <div class="field"><label>Re-type password:</label><input type="password" placeholder="Same as above"></div>
+        <label class="check-row"><input type="checkbox"> I agree to the <a>Terms of Use</a> and <a>Privacy Policy</a>.</label>
+        <button class="btn btn-blue" onclick="go('home')">Sign up</button>
+        <div class="or-divider">OR</div>
+        <p style="font-size:13px;font-weight:700;margin-bottom:10px">Sign up using your account with</p>
+        <button class="btn btn-outline btn-disabled" onclick="toast('Myinfo coming soon - not wired yet')">Retrieve My<b>info</b> <span style="color:var(--red);font-weight:800">with singpass</span><span class="soon badge-soon">SOON</span></button>
+      </div>
+    </div>
+
+    <!-- ============ HOME ============ -->
+    <div class="screen" id="scr-home">
+      <div class="header">
+        <div class="logo" id="logo-home"></div>
+        <div class="header-icons">
+          <button class="icon-btn" onclick="toast('3 new notifications')">&#128276;<span class="dot"></span></button>
+          <div class="burger" onclick="openDrawer()"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+      <div class="senior-row"><button class="senior-btn" id="senior1" onclick="toggleSenior(this)">SENIOR MODE</button></div>
+      <div class="content">
+        <h2 class="section-title">Bulletin</h2>
+        <div class="carousel" id="carousel">
+          <div class="slide slide-1 active"><h3>Selamat Hari Raya Bonus XP!</h3><p>Earn double XP on all Delivery &amp; Errands quests this week.</p></div>
+          <div class="slide slide-2"><h3>New Guild: Tampines Tigers</h3><p>Join a guild, climb the leaderboard, earn badges together.</p></div>
+          <div class="slide slide-3"><h3>Senior Mode is Live</h3><p>Help a senior, earn the Kaki Hero badge. Tap SENIOR MODE to try.</p></div>
+          <button class="car-btn car-prev" onclick="slide(-1)">&#8249;</button>
+          <button class="car-btn car-next" onclick="slide(1)">&#8250;</button>
+        </div>
+        <div class="dots" id="dots"></div>
+        <h2 class="section-title" style="margin-top:16px">Leaderboard</h2>
+        <table>
+          <tr><th style="width:18%">Rank</th><th>Guild Name</th><th style="width:22%">Points</th></tr>
+          <tr><td><span class="medal">&#129351;</span> 1</td><td class="name">Kiasu Kings</td><td>12,480</td></tr>
+          <tr><td><span class="medal">&#129352;</span> 2</td><td class="name">East Coast Riders</td><td>11,905</td></tr>
+          <tr><td><span class="medal">&#129353;</span> 3</td><td class="name">Tampines Tigers</td><td>10,332</td></tr>
+          <tr><td>4</td><td class="name">Jurong Jedi</td><td>9,877</td></tr>
+          <tr><td>5</td><td class="name">Punggol Pelicans</td><td>8,540</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ BROWSE ============ -->
+    <div class="screen" id="scr-browse">
+      <div class="header">
+        <div class="logo" id="logo-browse"></div>
+        <div class="header-icons">
+          <button class="icon-btn" onclick="toast('3 new notifications')">&#128276;<span class="dot"></span></button>
+          <div class="burger" onclick="openDrawer()"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+      <div class="senior-row"><button class="senior-btn" onclick="toggleSenior(this)">SENIOR MODE</button></div>
+      <div class="content">
+        <h2 class="section-title">Available Tasks :</h2>
+        <div class="field"><select id="tier-filter" onchange="filterTasks()">
+          <option value="all">Normal Tasks</option>
+          <option value="senior">Senior Tasks</option>
+          <option value="urgent">Urgent Tasks</option>
+          <option value="corporate">Corporate Tasks</option>
+          <option value="bonus">Bonus Tasks</option>
+        </select></div>
+        <div id="task-list"></div>
+      </div>
+    </div>
+
+    <!-- ============ POST ============ -->
+    <div class="screen" id="scr-post">
+      <div class="header">
+        <div class="logo" id="logo-post"></div>
+        <div class="header-icons">
+          <button class="icon-btn" onclick="toast('3 new notifications')">&#128276;<span class="dot"></span></button>
+          <div class="burger" onclick="openDrawer()"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+      <div class="senior-row"><button class="senior-btn" onclick="toggleSenior(this)">SENIOR MODE</button></div>
+      <div class="content">
+        <h2 class="section-title" style="font-size:24px">Post a Task</h2>
+        <div class="field"><label>Categories</label>
+          <select>
+            <option>Select a category...</option>
+            <option>Delivery &amp; Errands</option>
+            <option>Home &amp; Assembly</option>
+            <option>Tutoring &amp; Education</option>
+            <option>Moving</option>
+            <option>Pet Care</option>
+            <option>Events</option>
+          </select></div>
+        <div class="field"><label>Task Location<span class="req">Required</span></label><input placeholder="e.g. Blk 123 Tampines St 11"></div>
+        <div class="field"><label>Task Details<span class="req">Required</span></label><textarea placeholder="Describe what needs to be done..."></textarea></div>
+        <div class="field"><label>Task Reward<span class="req">Required</span></label><input placeholder="e.g. $25" style="max-width:140px"></div>
+        <div class="field"><label>Task Expected Completion</label><input type="date"></div>
+        <button class="btn btn-blue" onclick="openPay()">Post Task</button>
+        <p style="font-size:11.5px;color:var(--muted);text-align:center">Funds are held in KiasuPay escrow until the quest is complete.</p>
+      </div>
+      <!-- payment sheet (existing Stripe flow) -->
+      <div class="overlay" id="pay-overlay">
+        <div class="sheet">
+          <h3>Confirm &amp; Pay</h3>
+          <p class="sub">Kiasu Kompromise - your reward is held in escrow, released only when the task is verified.</p>
+          <div class="escrow-note">&#128274; Escrow: S$25.00 held safely. Tasker is paid on completion.</div>
+          <div class="field"><label>Card details</label><input placeholder="4242 4242 4242 4242"></div>
+          <div style="display:flex;gap:12px">
+            <div class="field" style="flex:1"><input placeholder="MM / YY"></div>
+            <div class="field" style="flex:1"><input placeholder="CVC"></div>
+          </div>
+          <button class="btn btn-blue" style="margin-bottom:8px" onclick="showSuccess()">Pay S$25.00</button>
+          <button class="btn btn-outline" style="box-shadow:none" onclick="closePay()">Cancel</button>
+        </div>
+      </div>
+      <div class="success" id="pay-success">
+        <div class="party">&#127881;</div>
+        <h2>Task Posted!</h2>
+        <p>Your quest is live and kakis nearby have been notified. XP +50 for posting your first quest!</p>
+        <button class="btn btn-blue" style="margin-top:18px" onclick="closeSuccess()">View in MyQuest</button>
+      </div>
+    </div>
+
+    <!-- ============ MYQUEST ============ -->
+    <div class="screen" id="scr-myquest">
+      <div class="header">
+        <div class="logo" id="logo-myquest"></div>
+        <div class="header-icons">
+          <button class="icon-btn" onclick="toast('3 new notifications')">&#128276;<span class="dot"></span></button>
+          <div class="burger" onclick="openDrawer()"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+      <div class="senior-row"><button class="senior-btn" onclick="toggleSenior(this)">SENIOR MODE</button></div>
+      <div class="content">
+        <h2 class="section-title">MyQuest :</h2>
+        <div class="field"><select id="quest-filter" onchange="filterQuests()">
+          <option value="progress">In Progress</option>
+          <option value="completed">Completed</option>
+          <option value="dispute">Dispute</option>
+          <option value="failed">Failed</option>
+        </select></div>
+        <div id="quest-list"></div>
+      </div>
+    </div>
+
+    <!-- ============ PROFILE ============ -->
+    <div class="screen" id="scr-profile">
+      <div class="header">
+        <div class="logo" id="logo-profile"></div>
+        <div class="header-icons">
+          <button class="icon-btn" onclick="toast('3 new notifications')">&#128276;<span class="dot"></span></button>
+          <div class="burger" onclick="openDrawer()"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+      <div class="senior-row"><button class="senior-btn" onclick="toggleSenior(this)">SENIOR MODE</button></div>
+      <div class="content" style="padding-top:2px">
+        <div class="pro-pill">Pro</div>
+        <div class="profile-top">
+          <div class="avatar-add" onclick="toast('Upload photo - camera roll')">+</div>
+          <div class="xp">
+            <div class="xp-row"><span>Experience Earned</span><span>1259/1800</span></div>
+            <div class="xp-bar"><div class="xp-fill"></div></div>
+          </div>
+        </div>
+        <p class="stat-line">Kaki Display name : <b>AndrewW</b></p>
+        <p class="stat-line">Kaki ID : <b>TL-2847</b></p>
+        <p class="stat-line">Rank : <b>Quest Rookie &rarr; Quest Journeyman</b></p>
+        <p class="stat-line">Skills (Verified) : <b>Delivery, Tutoring</b> <span style="font-size:11px;color:var(--green);font-weight:800">&#10003; verified</span></p>
+        <p class="stat-line">Total Earnings : <b>S$1,240.50</b></p>
+        <p class="stat-line">Badges Earned :</p>
+        <div class="badges">
+          <div class="badge-circle badge-pioneer">TASKLAH<br>PIONEER<br>2026</div>
+          <div class="badge-circle badge-rookie">QUEST<br>ROOKIE</div>
+        </div>
+        <div class="rating-row">
+          <span style="font-family:'Baloo 2';font-weight:700">Ratings :</span>
+          <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9734;</span>
+          <span class="num">4.2/5.0</span>
+        </div>
+        <button class="referral-btn" onclick="showRef()">My Kaki Referral Code</button>
+        <div class="referral-code" id="refcode">TL-KAKI-2847</div>
+      </div>
+    </div>
+
+    <!-- hamburger drawer -->
+    <div class="drawer-bg" id="drawer-bg" onclick="closeDrawer()"></div>
+    <div class="drawer" id="drawer">
+      <div class="drawer-head"><div id="logo-drawer" style="display:flex"></div></div>
+      <p class="drawer-user">AndrewW &middot; TL-2847 &middot; Pro member</p>
+      <button class="menu-item" onclick="toast('Wallet & Earnings - coming in next mockup set')"><span class="mi">&#128181;</span>Wallet &amp; Earnings<small>SOON</small></button>
+      <button class="menu-item" onclick="toast('Guild page - coming in next mockup set')"><span class="mi">&#128737;</span>My Guild<small>SOON</small></button>
+      <button class="menu-item" onclick="toast('Badges gallery - coming in next mockup set')"><span class="mi">&#127942;</span>Badges Gallery<small>SOON</small></button>
+      <button class="menu-item" onclick="toast('Invite a kaki, earn S$5 - referral program')"><span class="mi">&#127873;</span>Refer a Kaki</button>
+      <button class="menu-item" onclick="toast('Settings - coming in next mockup set')"><span class="mi">&#9881;</span>Settings</button>
+      <button class="menu-item" onclick="toast('Switch between Standard and Vanguard modes')"><span class="mi">&#128269;</span>Switch Mode</button>
+      <button class="menu-item" onclick="toast('Help &amp; Support - PDPA, FAQ, contact')"><span class="mi">&#10067;</span>Help &amp; Support</button>
+      <button class="menu-item danger" onclick="closeDrawer();go('login')"><span class="mi">&#128682;</span>Log Out</button>
+      <p class="drawer-note">Skeleton for the hamburger hub - items without mockups yet toast "coming in next set", so nothing is a dead click.</p>
+    </div>
+
+    <!-- ONNI floating chat -->
+    <button class="onni-btn" onclick="toggleOnni()">
+      <div class="mascot" id="mascot-onni"></div>
+      <span class="onni-label">ONNI</span>
+      <span class="onni-ping" id="onni-ping"></span>
+    </button>
+    <div class="onni-chat" id="onni-chat">
+      <div class="onni-head">
+        <div class="mascot" id="mascot-onni-head"></div>
+        <div><b>ONNI</b><small>Your kaki AI &middot; always here to help lah</small></div>
+        <button class="onni-close" onclick="toggleOnni()">&#10005;</button>
+      </div>
+      <div class="onni-body" id="onni-body">
+        <div class="msg bot">Eh hello kaki! I'm ONNI &#128075; I help you post quests, find tasks, and keep your escrow safe. What do you need?</div>
+      </div>
+      <div class="onni-quick">
+        <button onclick="onniAsk('How do I post a task?')">How to post?</button>
+        <button onclick="onniAsk('How does escrow work?')">Escrow?</button>
+        <button onclick="onniAsk('What is Senior Mode?')">Senior Mode?</button>
+        <button onclick="onniAsk('How do I earn XP?')">XP?</button>
+      </div>
+      <div class="onni-input">
+        <input id="onni-input" placeholder="Ask ONNI anything..." onkeydown="if(event.key==='Enter')onniSend()">
+        <button onclick="onniSend()">&#10148;</button>
+      </div>
+    </div>
+
+    <!-- toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ============ BOTTOM NAV ============ -->
+    <nav class="bottom-nav" id="bottom-nav">
+      <button class="nav-item" data-scr="home" onclick="go('home')">
+        <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Home</button>
+      <button class="nav-item" data-scr="browse" onclick="go('browse')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 15h5"/></svg>Browse</button>
+      <button class="nav-item" data-scr="post" onclick="go('post')">
+        <svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6"/><circle cx="12" cy="15" r="3.2"/><path d="M12 13.3v3.4M10.3 15h3.4"/></svg>Post</button>
+      <button class="nav-item" data-scr="myquest" onclick="go('myquest')">
+        <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h4"/></svg>MyQuest</button>
+      <button class="nav-item" data-scr="profile" onclick="go('profile')">
+        <svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6"/><circle cx="12" cy="13" r="2.4"/><path d="M8.5 19c.6-2 2-3 3.5-3s2.9 1 3.5 3"/></svg>Profile</button>
+    </nav>
+
+  </div>
+</div>
+
+<!-- ============ SIDE PANEL ============ -->
+<div class="side-panel">
+  <h2>TaskLah! Redesign Preview</h2>
+  <p>Clickable mockup of your 7 hand-drawn screens, rebuilt as a light-theme app. Click anything in the phone - tabs, dropdowns, the Post flow, even the confetti. <b>SENIOR MODE actually works</b> - tap it and watch text sizes grow.</p>
+  <ul class="screen-list">
+    <li onclick="go('login')">1. Login <span>Corppass + Singpass greyed "SOON"; Google/Email live (Kinde)</span></li>
+    <li onclick="go('signup')">2. Sign Up <span>Form + T&C + Myinfo option (SOON)</span></li>
+    <li onclick="go('home')">3. Home <span>Bulletin carousel + guild leaderboard</span></li>
+    <li onclick="go('browse')">4. Browse <span>Task tiers: Normal / Senior / Urgent / Corporate / Bonus</span></li>
+    <li onclick="go('post')">5. Post <span>Form &rarr; KiasuPay escrow payment sheet &rarr; confetti</span></li>
+    <li onclick="go('myquest')">6. MyQuest <span>In Progress / Completed / Dispute / Failed</span></li>
+    <li onclick="go('profile')">7. Profile <span>Pro badge, XP bar, badges, ratings, referral code</span></li>
+  </ul>
+  <p style="margin-top:14px;font-size:12px;color:#9ca3af">Demo data is hardcoded - same pattern as your BrowsePage demo tasks. Approved screens become paste-ready React next.</p>
+</div>
+
+<script>
+/* ---- logo pinwheel ---- */
+function pinwheelSVG(size){
+  let petals='';
+  for(let i=0;i<8;i++){
+    petals+='<path d="M32 32 L32 8 A12 12 0 0 1 44 20 Z" fill="#3b5bdb" transform="rotate('+(i*45)+' 32 32)" opacity="'+(i%2?0.75:1)+'"/>';
+  }
+  return '<svg viewBox="0 0 64 64" style="width:'+size+'px;height:'+size+'px">'+petals+'<circle cx="32" cy="32" r="6" fill="#fff"/></svg>';
+}
+document.getElementById('logo-big').innerHTML=pinwheelSVG(64);
+document.getElementById('logo-signup').innerHTML=pinwheelSVG(30)+'<div><div class="logo-text">TaskLah!</div><div class="logo-tag">Your Everyday Quests, Rewarded.</div></div>';
+['logo-home','logo-browse','logo-post','logo-myquest','logo-profile'].forEach(function(id){
+  document.getElementById(id).innerHTML=pinwheelSVG(30)+'<div><div class="logo-text">TaskLah!</div><div class="logo-tag">Your Everyday Quests, Rewarded.</div></div>';
+});
+
+/* ---- mascot (kaki boy: straw hat, glasses, orange vest) ---- */
+var MASCOT='<svg viewBox="0 0 100 120">'+
+'<ellipse cx="50" cy="34" rx="30" ry="9" fill="#e8d5a3"/><path d="M32 32 Q50 6 68 32 Z" fill="#f4e4b8"/><path d="M32 32 Q50 26 68 32" stroke="#4a6fa5" stroke-width="3" fill="none"/>'+
+'<circle cx="50" cy="45" r="16" fill="#ffd9b3"/>'+
+'<circle cx="43" cy="45" r="6.5" fill="none" stroke="#c92a2a" stroke-width="2.5"/><circle cx="57" cy="45" r="6.5" fill="none" stroke="#c92a2a" stroke-width="2.5"/><path d="M49.5 45 h1" stroke="#c92a2a" stroke-width="2.5"/>'+
+'<circle cx="43" cy="45" r="2" fill="#1e2430"/><circle cx="57" cy="45" r="2" fill="#1e2430"/>'+
+'<path d="M46 54 q4 3 8 0" stroke="#1e2430" stroke-width="1.5" fill="none"/>'+
+'<path d="M38 62 h24 l6 20 h-36 z" fill="#f59f00"/><path d="M38 62 h24 l1.5 5 h-27 z" fill="#e8790a"/>'+
+'<rect x="42" y="82" width="6" height="26" rx="3" fill="#4a6fa5"/><rect x="52" y="82" width="6" height="26" rx="3" fill="#4a6fa5"/>'+
+'<ellipse cx="45" cy="110" rx="7" ry="4" fill="#fff"/><ellipse cx="55" cy="110" rx="7" ry="4" fill="#fff"/>'+
+'<path d="M36 64 q-6 8 -2 14" stroke="#ffd9b3" stroke-width="5" fill="none" stroke-linecap="round"/>'+
+'<path d="M64 64 q6 8 2 14" stroke="#ffd9b3" stroke-width="5" fill="none" stroke-linecap="round"/>'+
+'</svg>';
+document.getElementById('mascot-1').innerHTML=MASCOT;
+document.getElementById('mascot-onni').innerHTML=MASCOT;document.getElementById('mascot-onni-head').innerHTML=MASCOT;
+document.getElementById('logo-drawer').innerHTML=pinwheelSVG(28)+'<div><div class="logo-text">TaskLah!</div><div class="logo-tag">Your Everyday Quests, Rewarded.</div></div>';
+
+/* ---- drawer ---- */
+function openDrawer(){document.getElementById('drawer').classList.add('open');document.getElementById('drawer-bg').classList.add('show')}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawer-bg').classList.remove('show')}
+
+/* ---- navigation ---- */
+var NAVED=['home','browse','post','myquest','profile'];
+function go(scr){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+  document.getElementById('scr-'+scr).classList.add('active');
+  document.getElementById('bottom-nav').style.display=NAVED.indexOf(scr)>-1?'flex':'none';
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.toggle('active',n.dataset.scr===scr)});
+  document.querySelector('.content.active')&&0;
+  var c=document.querySelector('#scr-'+scr+' .content');if(c)c.scrollTop=0;
+}
+go('login');
+
+/* ---- toast ---- */
+var toastTimer;
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove('show')},2200);
+}
+
+/* ---- senior mode ---- */
+function toggleSenior(btn){
+  btn.classList.toggle('on');
+  var on=btn.classList.contains('on');
+  btn.textContent=on?'SENIOR MODE: ON':'SENIOR MODE';
+  document.body.classList.toggle('senior',on);
+  document.querySelectorAll('.senior-btn').forEach(function(b){
+    b.classList.toggle('on',on);b.textContent=on?'SENIOR MODE: ON':'SENIOR MODE';
+  });
+  toast(on?'Senior Mode: bigger text, simpler flows':'Senior Mode off');
+}
+
+/* ---- carousel ---- */
+var slides=document.querySelectorAll('#carousel .slide'),dotsWrap=document.getElementById('dots'),cur=0;
+slides.forEach(function(_,i){
+  var d=document.createElement('i');if(i===0)d.className='on';
+  d.onclick=function(){cur=i;showSlide()};dotsWrap.appendChild(d);
+});
+function showSlide(){
+  slides.forEach(function(s,i){s.classList.toggle('active',i===cur)});
+  dotsWrap.querySelectorAll('i').forEach(function(d,i){d.classList.toggle('on',i===cur)});
+}
+function slide(dir){cur=(cur+dir+slides.length)%slides.length;showSlide();}
+
+/* ---- browse tasks ---- */
+var TASKS=[
+  {id:'TL-1042',t:'Grocery run for Ah Ma',d:'NTUC FairPrice - collect list, deliver to Blk 123 Tampines.',r:'$18',due:'Today, 6:00 PM',tier:'senior'},
+  {id:'TL-1041',t:'IKEA BILLY assembly',d:'Assemble 2x bookshelves, tools provided.',r:'$40',due:'Sat, 2:00 PM',tier:'normal'},
+  {id:'TL-1040',t:'Urgent doc delivery',d:'CBD to Jurong East, signed handover required.',r:'$30',due:'Today, 3:00 PM',tier:'urgent'},
+  {id:'TL-1039',t:'Primary 5 Math tutoring',d:'Weekly session, P5 fractions & ratio focus.',r:'$35/hr',due:'Wed, 5:00 PM',tier:'normal'},
+  {id:'TL-1038',t:'Office movers (SME)',d:'Studio relocation, 2 movers + van needed.',r:'$280',due:'Next Mon',tier:'corporate'},
+  {id:'TL-1037',t:'Weekend bonus: cat feeding',d:'Feed + cuddle Mochi, 3 days over CNY weekend.',r:'$15/day',due:'Feb 17-19',tier:'bonus'}
+];
+function renderTasks(filter){
+  var el=document.getElementById('task-list');el.innerHTML='';
+  TASKS.forEach(function(t){
+    if(filter!=='all'&&t.tier!==filter)return;
+    var tierLabel={normal:'Normal',senior:'Senior',urgent:'Urgent',corporate:'Corporate',bonus:'Bonus'}[t.tier];
+    el.innerHTML+='<div class="task-card"><h3>'+t.t+'<span class="tier-tag tier-'+t.tier+'">'+tierLabel+'</span></h3>'+
+      '<div class="meta"><span><b>Task ID :</b> '+t.id+'</span><span><b>Details :</b> '+t.d+'</span>'+
+      '<span><b>Reward :</b> '+t.r+'</span><span><b>Due :</b> '+t.due+'</span></div>'+
+      '<div class="card-foot"><button class="pill-btn pill-info" onclick="toast(\'Quest details view - Task \'+\''+t.id+'\')">Info</button></div></div>';
+  });
+  if(!el.innerHTML)el.innerHTML='<p style="text-align:center;color:var(--muted);padding:30px 0">No '+filter+' tasks right now - check back soon, kaki!</p>';
+}
+function filterTasks(){renderTasks(document.getElementById('tier-filter').value)}
+renderTasks('all');
+
+/* ---- myquests ---- */
+var QUESTS={
+  progress:[{id:'TL-1039',t:'Primary 5 Math tutoring',cat:'Tutoring & Education',d:'Session 2 of 4 this Wednesday.',btns:'info'}],
+  completed:[{id:'TL-1032',t:'Grocery run for Ah Ma',cat:'Delivery & Errands',d:'Delivered + photo confirmed. Escrow released.',btns:'done'}],
+  dispute:[{id:'TL-1030',t:'Fan installation',cat:'Home & Assembly',d:'Under Trinity of Trust review - mediator assigned.',btns:'info'}],
+  failed:[{id:'TL-1028',t:'Dog walking (Mochi)',cat:'Pet Care',d:'Expired - tasker no-show. Reward refunded to escrow.',btns:'fail'}]
+};
+function renderQuests(key){
+  var el=document.getElementById('quest-list');el.innerHTML='';
+  QUESTS[key].forEach(function(q){
+    var b='';
+    if(q.btns==='done')b='<button class="pill-btn pill-done" onclick="toast(\'Marked completed - nice work kaki!\')">Completed</button><button class="pill-btn pill-fail" onclick="toast(\'Mark failed - goes to review\')">Failed</button><button class="pill-btn pill-info" onclick="toast(\'Task '+q.id+' details\')">Info</button>';
+    else if(q.btns==='fail')b='<button class="pill-btn pill-fail" onclick="toast(\'Already failed - escrow refunded\')">Failed</button><button class="pill-btn pill-info" onclick="toast(\'Task '+q.id+' details\')">Info</button>';
+    else b='<button class="pill-btn pill-info" onclick="toast(\'Task '+q.id+' details\')">Info</button>';
+    el.innerHTML+='<div class="task-card quest-card"><h3>'+q.t+'</h3>'+
+      '<div class="meta"><span><b>Task ID :</b> '+q.id+'</span><span><b>Category :</b> '+q.cat+'</span><span><b>Details :</b> '+q.d+'</span></div>'+
+      '<div class="card-foot" style="justify-content:flex-start;gap:10px">'+b+'</div></div>';
+  });
+}
+function filterQuests(){renderQuests(document.getElementById('quest-filter').value)}
+renderQuests('progress');
+
+/* ---- post -> payment -> success ---- */
+function openPay(){document.getElementById('pay-overlay').classList.add('show')}
+function closePay(){document.getElementById('pay-overlay').classList.remove('show')}
+function showSuccess(){
+  closePay();
+  var s=document.getElementById('pay-success');s.classList.add('show');
+  var cols=['#3b5bdb','#2f9e44','#e8590c','#f59f00','#e03131','#7048e8'];
+  for(var i=0;i<26;i++){
+    var c=document.createElement('div');c.className='confetti';
+    c.style.left=(5+Math.random()*90)+'%';
+    c.style.background=cols[i%cols.length];
+    c.style.animationDelay=(Math.random()*0.8)+'s';
+    c.style.borderRadius=Math.random()>.5?'50%':'2px';
+    s.appendChild(c);
+  }
+}
+function closeSuccess(){
+  document.getElementById('pay-success').classList.remove('show');
+  go('myquest');toast('Quest TL-1043 added to MyQuest');
+}
+
+/* ---- ONNI chat ---- */
+var onniOpen=false;
+function toggleOnni(){
+  onniOpen=!onniOpen;
+  document.getElementById('onni-chat').classList.toggle('show',onniOpen);
+  document.getElementById('onni-ping').style.display=onniOpen?'none':'block';
+  if(onniOpen)setTimeout(function(){document.getElementById('onni-input').focus()},200);
+}
+function onniMsg(text,who){
+  var b=document.getElementById('onni-body');
+  var d=document.createElement('div');d.className='msg '+who;d.textContent=text;
+  b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
+function onniReply(q){
+  q=q.toLowerCase();
+  if(q.indexOf('post')>-1)return 'Tap the Post tab, pick a category, fill in location, details, reward and date. I will guide the escrow payment after - your money stays safe until the quest is done!';
+  if(q.indexOf('escrow')>-1||q.indexOf('pay')>-1)return 'KiasuPay escrow lah! Your reward is held safely when you post. The tasker only gets paid after you confirm the quest is done. Kiasu-approved.';
+  if(q.indexOf('senior')>-1)return 'Tap the green SENIOR MODE button at the top. Text becomes bigger, buttons friendlier, flows simpler. Try it now - I will wait.';
+  if(q.indexOf('xp')>-1||q.indexOf('level')>-1)return 'You earn XP for posting, completing quests and helping kakis. At 1800 XP you rank up from Quest Rookie to Quest Journeyman. Collect badges too!';
+  if(q.indexOf('guild')>-1)return 'Guilds are kaki teams! Climb the leaderboard together on the Home page. Full guild page is coming in the next mockup set.';
+  if(q.indexOf('hi')>-1||q.indexOf('hello')>-1||q.indexOf('eh')>-1)return 'Eh hello! Nice to see you. Ask me about posting tasks, escrow, Senior Mode or XP.';
+  return 'Good question! I am still learning my manners (beta brain). For now, try asking about posting tasks, escrow, Senior Mode or XP - or email the humans at contactus@drewstudio.org.';
+}
+function onniSend(){
+  var inp=document.getElementById('onni-input');
+  var v=inp.value.trim();if(!v)return;
+  onniMsg(v,'me');inp.value='';
+  setTimeout(function(){onniMsg(onniReply(v),'bot')},500);
+}
+function onniAsk(q){
+  onniMsg(q,'me');
+  setTimeout(function(){onniMsg(onniReply(q),'bot')},500);
+}
+
+/* ---- referral ---- */
+function showRef(){
+  document.getElementById('refcode').classList.toggle('show');
+}
+</script>
+</body>
+</html>
